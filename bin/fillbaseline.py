@@ -89,35 +89,33 @@ class FillBaselineCommand(ReportingCommand):
         **Description:** Name to be referenced for storing the basic statistics in the kvstore''',
         require=True)
 
-    variable = Option(
+    value = Option(
         doc='''
-        **Syntax:** **variable=***<fieldname>*
-        **Description:** variable/column used to aggregate by and calculate the statistical metrics''',
+        **Syntax:** **value=***<fieldname>*
+        **Description:** value/column used to aggregate by and calculate the statistical metrics''',
         require=True, validate=validators.Fieldname())
 
     collections_data_endpoint = 'storage/collections/data/'
-    collection_name = 'hyperbaseline_kv'
+    collection_name = 'hyperbaseline'
 
     def reduce(self, records):
         dict = {}
         for record in records:
-            if not record[self.variable] in dict:
-                dict[record[self.variable]] = {}
+            if not record[self.value] in dict:
+                dict[record[self.value]] = {}
             for fieldname in record:
-                if fieldname.startswith("_") or fieldname == self.variable:
+                if fieldname.startswith("_") or fieldname == self.value:
                     continue
-                if not fieldname in dict[record[self.variable]]:
-                    value = convertStr(record[fieldname])
-                    if value is None:
-                        continue # skip none nummeric values
-                    dict[record[self.variable]][fieldname] = [value]
                 else:
                     value = convertStr(record[fieldname])
                     if value is None:
                         continue # skip none nummeric values
-                    new_data = dict[record[self.variable]][fieldname]
+                    try:
+                        new_data = dict[record[self.value]][fieldname]
+                    except KeyError:
+                        new_data = []
                     new_data.append(value)
-                    dict[record[self.variable]][fieldname] = new_data
+                    dict[record[self.value]][fieldname] = new_data
 
         output_array = []
         for key, value in dict.iteritems():
@@ -126,8 +124,8 @@ class FillBaselineCommand(ReportingCommand):
                 current_payload = OrderedDict()
                 current_payload["_key"] = self.config_name + "#" + key + "#" + k
                 current_payload["config_name"] = self.config_name
-                current_payload["variable"] =  key
-                current_payload["metric"] = k
+                current_payload["value"] =  key
+                current_payload["field"] = k
                 current_payload["min"] = min(sorted_data)
                 current_payload["pct25"] = percentile(sorted_data,percent=0.25)
                 current_payload["mean"] = mean(sorted_data)
@@ -140,14 +138,15 @@ class FillBaselineCommand(ReportingCommand):
                 output_array.append(current_payload)
                 yield current_payload
 
-        app_service = client.Service(token=self.input_header["sessionKey"])
-        request2 = app_service.request(
-            self.collections_data_endpoint + self.collection_name + "/batch_save",
-            method = 'post',
-            headers = [('content-type', 'application/json')],
-            body = json.dumps(output_array),
-            owner = 'nobody',
-            app = 'SA-hyperbaseline'
-        )
+        if output_array:
+            app_service = client.Service(token=self.input_header["sessionKey"])
+            request2 = app_service.request(
+                self.collections_data_endpoint + self.collection_name + "/batch_save",
+                method = 'post',
+                headers = [('content-type', 'application/json')],
+                body = json.dumps(output_array),
+                owner = 'nobody',
+                app = 'SA-hyperbaseline'
+            )
 
 dispatch(FillBaselineCommand, sys.argv, sys.stdin, sys.stdout, __name__)

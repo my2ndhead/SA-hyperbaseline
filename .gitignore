@@ -7,3 +7,5 @@ local/datamodels.conf
 metadata/local.meta
 .DS_Store
 *.log
+.remote-sync.json
+

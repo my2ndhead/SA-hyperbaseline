@@ -26,12 +26,12 @@ class CompareToBaselineCommand(StreamingCommand):
     extreme Studentized deviation (ESD), Hampel, standard boxplot rule (SBR) and asymmetric standard boxplot rule (ASBR). For further information please check http://www.r-bloggers.com/finding-outliers-in-numerical-data/
     ##Syntax
     .. code-block::
-        comparetobaseline config_name=<string> variable=<fieldname>
+        comparetobaseline config_name=<string> value=<fieldname>
     ##Description:
 
     ##Example
     ..code-block::
-        index=_internal sourcetype=splunkd_ui_access| bucket span=1d _time | stats avg(date_hour) as avg_hour min(date_hour) as min_hour max(date_hour) as max_hour by user _time | comparetobaseline config_name="usage_hours" variable="user"
+        index=_internal sourcetype=splunkd_ui_access| bucket span=1d _time | stats avg(date_hour) as avg_hour min(date_hour) as min_hour max(date_hour) as max_hour by user _time | comparetobaseline config_name="usage_hours" value="user"
     This example provides scores for the avg_hour, min_hour and max_hour columns using the key value entries stored under config_name usage_hours
     :code:`_internal index sourcetype=splunkd_ui_access`.
     """
@@ -41,10 +41,10 @@ class CompareToBaselineCommand(StreamingCommand):
         **Description:** Name to be referenced for storing the basic statistics in the kvstore''',
         require=True)
 
-    variable = Option(
+    value = Option(
         doc='''
-        **Syntax:** **variable=***<fieldname>*
-        **Description:** variable/column used to aggregate by and calculate the statistical metrics''',
+        **Syntax:** **value=***<fieldname>*
+        **Description:** value/column used to aggregate by and calculate the statistical metrics''',
         require=True, validate=validators.Fieldname())
 
     threshold = Option(
@@ -66,7 +66,7 @@ class CompareToBaselineCommand(StreamingCommand):
         require=False, validate=validators.Boolean(), default=False)
 
     collections_data_endpoint = 'storage/collections/data/'
-    collection_name = 'hyperbaseline_kv'
+    collection_name = 'hyperbaseline'
 
     def stream(self, records):
         app_service = client.Service(token=self.input_header["sessionKey"])
@@ -74,10 +74,10 @@ class CompareToBaselineCommand(StreamingCommand):
             new_record = OrderedDict()
             for fieldname in record:
                 new_record[fieldname] = record[fieldname]
-                if fieldname.startswith("_") or fieldname==self.variable:
+                if fieldname.startswith("_") or fieldname==self.value:
                     continue
                 else:
-                    key = self.config_name+"#"+record[self.variable]+"#"+fieldname
+                    key = self.config_name+"#"+record[self.value]+"#"+fieldname
                     try:
                         request2 = app_service.request(
                             self.collections_data_endpoint + self.collection_name + "/" + key,
