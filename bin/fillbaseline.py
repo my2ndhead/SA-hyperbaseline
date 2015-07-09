@@ -6,6 +6,7 @@ import math
 import functools
 import json
 import medcouple
+import time
 
 from collections import OrderedDict
 from splunklib.searchcommands import \
@@ -95,8 +96,13 @@ class FillBaselineCommand(ReportingCommand):
         **Description:** value/column used to aggregate by and calculate the statistical metrics''',
         require=True, validate=validators.Fieldname())
 
+    kv_store = Option(
+        doc='''
+        **Syntax:** **value=***<fieldname>*
+        **Description:** value/column used to aggregate by and calculate the statistical metrics''',
+        require=False, default="hyperbaseline")
+
     collections_data_endpoint = 'storage/collections/data/'
-    collection_name = 'hyperbaseline'
 
     def reduce(self, records):
         dict = {}
@@ -135,13 +141,16 @@ class FillBaselineCommand(ReportingCommand):
                 current_payload["stdev"] = pstdev(sorted_data)
                 current_payload["mad"] = median(sorted([abs(x - current_payload["median"]) for x in sorted_data]))
                 current_payload["medcouple"] = medcouple.medcouple_1d(sorted_data)
+                current_payload["owner"] = self.input_header["owner"]
+                current_payload["_time"] = int(time.time())
                 output_array.append(current_payload)
                 yield current_payload
 
+        # check if the output_array actually contains elements before pushing it into the KV store
         if output_array:
             app_service = client.Service(token=self.input_header["sessionKey"])
             request2 = app_service.request(
-                self.collections_data_endpoint + self.collection_name + "/batch_save",
+                self.collections_data_endpoint + self.kv_store + "/batch_save",
                 method = 'post',
                 headers = [('content-type', 'application/json')],
                 body = json.dumps(output_array),
