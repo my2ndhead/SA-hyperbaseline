@@ -8,6 +8,7 @@ import json
 import medcouple
 import time
 
+from xml.dom import minidom
 from collections import OrderedDict
 from splunklib.searchcommands import \
     dispatch, ReportingCommand, Configuration, Option, validators
@@ -105,6 +106,8 @@ class FillBaselineCommand(ReportingCommand):
     collections_data_endpoint = 'storage/collections/data/'
 
     def reduce(self, records):
+        xml_doc = minidom.parseString(self.input_header["authString"])
+        user_id = xml_doc.getElementsByTagName('userId')[0].firstChild.nodeValue
         dict = {}
         for record in records:
             if not record[self.value] in dict:
@@ -141,7 +144,7 @@ class FillBaselineCommand(ReportingCommand):
                 current_payload["stdev"] = pstdev(sorted_data)
                 current_payload["mad"] = median(sorted([abs(x - current_payload["median"]) for x in sorted_data]))
                 current_payload["medcouple"] = medcouple.medcouple_1d(sorted_data)
-                current_payload["owner"] = self.input_header["owner"]
+                current_payload["owner"] = user_id
                 current_payload["_time"] = int(time.time())
                 output_array.append(current_payload)
                 yield current_payload

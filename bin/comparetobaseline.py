@@ -77,6 +77,8 @@ class CompareToBaselineCommand(StreamingCommand):
                 if fieldname.startswith("_") or fieldname==self.value:
                     continue
                 else:
+                    # initialize empty response_json outside of the try except clause
+                    response_json = ""
                     key = self.config_name+"#"+record[self.value]+"#"+fieldname
                     try:
                         request2 = app_service.request(
@@ -89,7 +91,7 @@ class CompareToBaselineCommand(StreamingCommand):
                         response_json = json.loads(str(request2["body"]))
                     except:
                         # if no key value store entry is found continue
-                        continue
+                        pass
                     if response_json:
                         if self.method == "ESD":
                             # set default threshold if option is empty
@@ -138,6 +140,7 @@ class CompareToBaselineCommand(StreamingCommand):
                         if self.debug:
                             new_record[fieldname+":bounds"] = bounds
                             new_record[fieldname+":stats"] = response_json
+
             yield new_record
 
 dispatch(CompareToBaselineCommand, sys.argv, sys.stdin, sys.stdout, __name__)
