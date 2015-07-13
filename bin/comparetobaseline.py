@@ -74,11 +74,10 @@ class CompareToBaselineCommand(StreamingCommand):
             new_record = OrderedDict()
             for fieldname in record:
                 new_record[fieldname] = record[fieldname]
-                if fieldname.startswith("_") or fieldname==self.value:
-                    continue
-                else:
+                if fieldname in self.fieldnames:
                     # initialize empty response_json outside of the try except clause
                     response_json = ""
+                    new_record[fieldname+":score"] = ""
                     key = self.config_name+"#"+record[self.value]+"#"+fieldname
                     try:
                         request2 = app_service.request(

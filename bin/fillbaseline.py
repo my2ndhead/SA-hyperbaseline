@@ -112,19 +112,16 @@ class FillBaselineCommand(ReportingCommand):
         for record in records:
             if not record[self.value] in dict:
                 dict[record[self.value]] = {}
-            for fieldname in record:
-                if fieldname.startswith("_") or fieldname == self.value:
-                    continue
-                else:
-                    value = convertStr(record[fieldname])
-                    if value is None:
-                        continue # skip none nummeric values
-                    try:
-                        new_data = dict[record[self.value]][fieldname]
-                    except KeyError:
-                        new_data = []
-                    new_data.append(value)
-                    dict[record[self.value]][fieldname] = new_data
+            for fieldname in self.fieldnames:
+                value = convertStr(record[fieldname])
+                if value is None:
+                    continue # skip none nummeric values
+                try:
+                    new_data = dict[record[self.value]][fieldname]
+                except KeyError:
+                    new_data = []
+                new_data.append(value)
+                dict[record[self.value]][fieldname] = new_data
 
         output_array = []
         for key, value in dict.iteritems():
