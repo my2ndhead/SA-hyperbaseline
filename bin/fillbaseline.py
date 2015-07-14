@@ -76,14 +76,16 @@ class FillBaselineCommand(ReportingCommand):
     """ Computes basic statistics for a given timeseries generated with timechart command. Bare in mind to set the limit and useother options of the timechart command according to your needs.
     ##Syntax
     .. code-block::
-        fillbaseline config_name=<string>
+        fillbaseline config_name=<string> variable=<fieldname> [kv_store=<string>] <field-list>
     ##Description:
-    Count, sum, mean and standard deviation are calculated for each column of the timechart result (excluding _time).
+        Calculate basic statistics mad, max, mean, medcouple, median, min, pct25, pct75 and stdev aggregated by the field provided as variable parameter. \
+        The calculated statistics are stored in a collection (default collection = hyperbaseline) and will be used by the comparetobaseline command for scoring. \
+        Statistics are only calculated for numerical fields provided by field-list.
     ##Example
     ..code-block::
-        index=_internal sourcetype=splunkd_ui_access| timechart limit=0 useother=f count by user | fillbaseline config_name="test"
-    This example computes the basic statistics for the timeseries of
-    :code:`_internal index sourcetype=splunkd_ui_access`.
+        index=_internal sourcetype=splunkd_ui_access| bucket span=1d _time
+            | stats avg(date_hour) as avg_hour min(date_hour) as min_hour max(date_hour) as max_hour by user _time
+            | fillbaseline config_name="ui_usage" value=user avg_hour min_hour max_hour
     """
     config_name = Option(
         doc='''
@@ -99,8 +101,8 @@ class FillBaselineCommand(ReportingCommand):
 
     kv_store = Option(
         doc='''
-        **Syntax:** **value=***<fieldname>*
-        **Description:** value/column used to aggregate by and calculate the statistical metrics''',
+        **Syntax:** **value=***<string>*
+        **Description:** name of the collection the statistics will be stored in''',
         require=False, default="hyperbaseline")
 
     collections_data_endpoint = 'storage/collections/data/'

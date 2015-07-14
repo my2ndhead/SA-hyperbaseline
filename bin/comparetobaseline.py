@@ -22,18 +22,20 @@ def map_score (value, bounds):
 
 @Configuration()
 class CompareToBaselineCommand(StreamingCommand):
-    """ Compare given values using statistical functions to identify an outlier. The 4 different outlier detection methods from the FindOutlier package in R are available.
-    extreme Studentized deviation (ESD), Hampel, standard boxplot rule (SBR) and asymmetric standard boxplot rule (ASBR). For further information please check http://www.r-bloggers.com/finding-outliers-in-numerical-data/
+    """
     ##Syntax
     .. code-block::
-        comparetobaseline config_name=<string> value=<fieldname>
+        comparetobaseline config_name=<string> variable=<fieldname> [kv_store=<string>] [threshold=<float>] [method=ESD|Hampel|SBR|ASBR] [debug=<boolean>] <field-list>
     ##Description:
+        Compare given values using statistical functions to identify an outlier. The 4 different outlier detection methods from
+        the FindOutlier package in R are available.
+         extreme Studentized deviation (ESD), Hampel, standard boxplot rule (SBR) and asymmetric standard boxplot rule (ASBR).
 
     ##Example
     ..code-block::
-        index=_internal sourcetype=splunkd_ui_access| bucket span=1d _time | stats avg(date_hour) as avg_hour min(date_hour) as min_hour max(date_hour) as max_hour by user _time | comparetobaseline config_name="usage_hours" value="user"
-    This example provides scores for the avg_hour, min_hour and max_hour columns using the key value entries stored under config_name usage_hours
-    :code:`_internal index sourcetype=splunkd_ui_access`.
+        index=_internal sourcetype=splunkd_ui_access | bucket span=1d _time
+            | stats avg(date_hour) as avg_hour min(date_hour) as min_hour max(date_hour) as max_hour by user _time 
+            | comparetobaseline config_name="ui_usage" variable="user" min_hour avg_hour max_hour
     """
     config_name = Option(
         doc='''
@@ -46,6 +48,12 @@ class CompareToBaselineCommand(StreamingCommand):
         **Syntax:** **value=***<fieldname>*
         **Description:** value/column used to aggregate by and calculate the statistical metrics''',
         require=True, validate=validators.Fieldname())
+
+    kv_store = Option(
+        doc='''
+        **Syntax:** **value=***<string>*
+        **Description:** name of the collection the statistics will be stored in''',
+        require=False, default="hyperbaseline")
 
     threshold = Option(
         doc='''
@@ -66,7 +74,6 @@ class CompareToBaselineCommand(StreamingCommand):
         require=False, validate=validators.Boolean(), default=False)
 
     collections_data_endpoint = 'storage/collections/data/'
-    collection_name = 'hyperbaseline'
 
     def stream(self, records):
         app_service = client.Service(token=self.input_header["sessionKey"])
@@ -81,7 +88,7 @@ class CompareToBaselineCommand(StreamingCommand):
                     key = self.config_name+"#"+record[self.value]+"#"+fieldname
                     try:
                         request2 = app_service.request(
-                            self.collections_data_endpoint + self.collection_name + "/" + key,
+                            self.collections_data_endpoint + self.kv_store + "/" + key,
                             method = 'get',
                             headers = [('content-type', 'application/json')],
                             owner = 'nobody',
