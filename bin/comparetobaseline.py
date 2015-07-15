@@ -84,7 +84,7 @@ class CompareToBaselineCommand(StreamingCommand):
                 if fieldname in self.fieldnames:
                     # initialize empty response_json outside of the try except clause
                     response_json = ""
-                    new_record[fieldname+":score"] = ""
+                    new_record[fieldname+":score"] = -1
                     key = self.config_name+"#"+record[self.value]+"#"+fieldname
                     try:
                         request2 = app_service.request(
