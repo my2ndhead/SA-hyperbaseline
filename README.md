@@ -1,7 +1,7 @@
 # Support Add-on for Hyperbaseline
 - **Authors**:		Simon Balz <simon@balz.me>, Mika Borner <mika.borner@gmail.com>, Christoph Dittmann <mulibu.flyingk@gmail.com>, Harun Kuessner <h.kuessner@posteo.de>
 - **Description**:	Store baseline statistics based on historical data and score current events based on these statistics
-- **Version**: 		0.1
+- **Version**: 		1.0
 
 ## Introduction
 The Support Add-on for Hyperbaseline provides two custom search commands which enables the user to store statistical values in a splunk collection based on historical events (fillbaseline) and use these statistics to determine potential outliers in current data (comparetobaseline).
@@ -15,6 +15,8 @@ The Support Add-on for Hyperbaseline provides two custom search commands which e
 - The app will be used within customer projects, and improved according to customer and community needs. Development of the app will happen in public. Bugs/Issues and improvement requests can be opened on the project's Github page (<https://github.com/my2ndhead/SA-hyperbaseline/issues>).
 
 ## Release Notes
+- **v1.0**	/	2015-07-20
+	- Bugfixes and final release for Apptitude2 submission
 - **v0.1**	/ 	2015-07-15
 	- first initial version committed to github in develop branch
 
