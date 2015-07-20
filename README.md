@@ -62,10 +62,6 @@ The Support Add-on for Hyperbaseline provides two custom search commands which e
 			| stats avg(date_hour) as avg_hour min(date_hour) as min_hour max(date_hour) as max_hour by user _time
 			| comparetobaseline config_name="ui_usage" variable="user" min_hour avg_hour max_hour
 
-### Note for distributed environments
-- The alert manager runs mostly on the search head (since we use the App Key Value Store)
-- Due to the usage of the App Key Value Store, there's no compatibility with Search Head Clustering (SHC) introduced in Splunk v6.2
-
 ## Roadmap
 - add further outlier detection methods which are able to take seasonality and trend into account
 
